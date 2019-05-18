@@ -1,0 +1,126 @@
+<div class="container">
+  <div class="sidebar">
+    <div class="content">
+      <h3>
+        Operation
+        <button nz-button style="float: right" *ngIf="actionType === 0" (click)="run()">
+          <i nz-icon type="play-circle" theme="outline"></i>
+          Run
+        </button>
+        <button nz-button style="float: right" *ngIf="actionType === 1" (click)="compare()">
+          <i nz-icon type="switcher" theme="outline"></i>
+          Compare
+        </button>
+      </h3>
+      <nz-divider></nz-divider>
+      <div nz-row>
+        <h4>Models</h4>
+        <p>Upload keras models to view the structure. Click to select the model.</p>
+        <nz-upload [nzCustomRequest]="customBigReq"
+                   [nzShowUploadList]="false"
+                   [nzFileList]="modelUploadedList"
+                   [nzLimit]="1">
+          <button nz-button>
+            <i class="anticon anticon-upload"></i><span>Upload Model</span>
+          </button>
+        </nz-upload>
+        <div class="file-list-wrapper">
+          <div class="ant-upload-list-item"
+               [ngClass]="{
+                 'ant-upload-list-item-done': item['status'] === 'done',
+                 'ant-upload-list-item-error': item['status'] === 'error',
+                 'selected': item['status'] === 'done' && item['selected']
+               }"
+               *ngFor="let item of modelUploadedList"
+               (click)="selectModel(item)">
+            <div class="ant-upload-list-item-info">
+              <i class="anticon anticon-paper-clip"></i>
+              <span class="ant-upload-list-item-name"
+                    title="{{ item.modelName }}">
+                {{ item.modelName }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <!--<nz-upload [nzCustomRequest]="customBigReq" [nzShowUploadList]="true" [nzFileList]="modelUploadedListTest" nzLimit="1">-->
+          <!--<button nz-button>-->
+            <!--<i class="anticon anticon-upload"></i><span>Upload Model</span>-->
+          <!--</button>-->
+        <!--</nz-upload>-->
+      </div>
+      <nz-divider></nz-divider>
+      <div nz-row>
+        <h4>Samples</h4>
+        <nz-tabset>
+          <nz-tab nzTitle="Image">
+            <p>You can upload images to run the model.</p>
+            <nz-upload [nzCustomRequest]="imageUpload"
+                       [nzShowUploadList]="false"
+                       [nzLimit]="1"
+                       [nzFileList]="imageUploadedList">
+              <button nz-button>
+                <i class="anticon anticon-upload"></i><span>Upload Image</span>
+              </button>
+            </nz-upload>
+            <div class="file-list-wrapper">
+              <div class="ant-upload-list-item"
+                   [ngClass]="{
+                      'ant-upload-list-item-done': item['status'] == 'done',
+                      'ant-upload-list-item-error': item['status'] == 'error',
+                      'selected': item['status'] == 'done' && item['selected']
+                    }"
+                   *ngFor="let item of imageUploadedList"
+                   (click)="selectImages(item)">
+                <div class="ant-upload-list-item-info">
+                  <img *ngIf="item.imageB64" [src]="item.imageB64"/>
+                  <i *ngIf="!item.imageB64" class="anticon anticon-paper-clip"></i>
+                  <!--<i class="anticon anticon-paper-clip ng-star-inserted"></i>-->
+                  <span class="ant-upload-list-item-name"
+                        title="{{ item.imageName }}">{{ item.imageName }}</span>
+                </div>
+              </div>
+            </div>
+            <p>You can upload the image and choose an adversarial attack to obverse the model's performance.</p>
+            <nz-select [(ngModel)]="selectedAttack" style="width: 200px" nzPlaceHolder="Choose an attack function">
+              <nz-option nzValue="lbfgs" nzLabel="LBFGS"></nz-option>
+              <nz-option nzValue="singlepixelattack" nzLabel="Single Pixel Attack"></nz-option>
+            </nz-select>
+            <button nz-button (click)="generateAdv()">Generate</button>
+          </nz-tab>
+          <nz-tab nzTitle="Sketchpad" id="sketchpad">
+            <div nz-row style="display: flex; justify-content: center">
+              <signature-pad [options]="sketchpadOptions" #sketchpad></signature-pad>
+            </div>
+            <div nz-row style="padding: 5px 16px">
+              <button nz-button style="width: 100px; margin-right: 10px" (click)="clearSketchpad()">Clear</button>
+              <button nz-button style="width: 100px" (click)="getSketchpadImage()">Submit</button>
+            </div>
+          </nz-tab>
+        </nz-tabset>
+      </div>
+    </div>
+    <!--<button nz-button (click)="testBlock()">test</button>-->
+  </div>
+  <div id="loading" class="loading" *ngIf="isLoading">
+    <ng-template #indicatorTemplate>
+      <i nz-icon type="loading" style="font-size: 90px;"></i>
+    </ng-template>
+    <nz-spin [nzIndicator]="indicatorTemplate"></nz-spin>
+  </div>
+  <div class="main" [ngClass]="{'compare': compareState, 'compareReverse': compareReverse !== undefined && compareReverse}">
+    <div id="compute-graph" #computeGraph></div>
+    <div id="compare-board-wrapper">
+      <div id="compare-board-layer-selector">
+        <h3>Select a layer</h3>
+        <nz-divider></nz-divider>
+        <p>We currently only provide a comparison of individual layers.</p>
+        <nz-select [nzPlaceHolder]="'Select a layer'" style="width: 200px" [(ngModel)]="selectedLayer" (ngModelChange)="startCompare()">
+          <nz-option *ngFor="let layer of selectedLayerOptions" [nzValue]="layer" [nzLabel]="layer.name"></nz-option>
+        </nz-select>
+      </div>
+      <div id="compare-board-graph" #compareBoard>
+
+      </div>
+    </div>
+  </div>
+</div>
